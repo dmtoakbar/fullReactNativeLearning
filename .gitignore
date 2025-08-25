@@ -35,6 +35,13 @@ local.properties
 !debug.keystore
 .kotlin/
 
+#remove all local file
+android/.gradle/
+android/.kotlin/
+android/build/
+android/app/.cxx/
+android/app/build/
+
 # node.js
 #
 node_modules/
