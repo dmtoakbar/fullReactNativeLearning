@@ -9,7 +9,7 @@ const Stack = createNativeStackNavigator();
 
 const AppNavigation = () => {
   return (
-    <Stack.Navigator initialRouteName="temp">
+    <Stack.Navigator initialRouteName="animatedApi">
       {routeNames.map(({ name, component }) => (
         <Stack.Screen
           key={name}
