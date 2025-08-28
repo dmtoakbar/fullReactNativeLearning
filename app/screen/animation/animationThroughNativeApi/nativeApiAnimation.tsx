@@ -4,6 +4,11 @@ import Basic from "./bsics";
 import BasicXY from "./basics-xy";
 import { Interpolation } from "@react-spring/native";
 import InterPolation from "./interpolation";
+import AnimTypes from "./animTypes";
+import NestingFunction from "./nestingFunction";
+import AnimatedEvent from "./event";
+import CustomAnimatedComponent from "./createAnimatedComponent";
+import LayoutStrcAnimation from "./laoyoutAnimation";
 
 
 const AnimatedApi = () => {
@@ -27,7 +32,12 @@ const AnimatedApi = () => {
             {/* animated library */}
             {/* <Basic/> */}
             {/* <BasicXY /> */}
-            <InterPolation />
+            {/* <InterPolation /> */}
+            {/* <AnimTypes /> */}
+            {/* <NestingFunction /> */}
+            {/* <AnimatedEvent/> */}
+            {/* <CustomAnimatedComponent /> */}
+            <LayoutStrcAnimation />
         </View>
     );
 };
