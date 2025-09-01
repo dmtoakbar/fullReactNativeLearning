@@ -9,6 +9,7 @@ import NestingFunction from "./nestingFunction";
 import AnimatedEvent from "./event";
 import CustomAnimatedComponent from "./createAnimatedComponent";
 import LayoutStrcAnimation from "./laoyoutAnimation";
+import ScrollEvent from "./scrollEvnt";
 
 
 const AnimatedApi = () => {
@@ -24,22 +25,25 @@ const AnimatedApi = () => {
         return ()  => clearInterval(interval);
     }, []);
 
-    return (
-        <View style={styles.container}>
-            <Text>Animated Through Native Animated Api</Text>
-            {/* no library */}
-            {/* <View style={[styles.box, {marginLeft: position}]}></View> */}
-            {/* animated library */}
-            {/* <Basic/> */}
-            {/* <BasicXY /> */}
-            {/* <InterPolation /> */}
-            {/* <AnimTypes /> */}
-            {/* <NestingFunction /> */}
-            {/* <AnimatedEvent/> */}
-            {/* <CustomAnimatedComponent /> */}
-            <LayoutStrcAnimation />
-        </View>
-    );
+    // return (
+    //     <View style={styles.container}>
+    //         <Text>Animated Through Native Animated Api</Text>
+    //         {/* no library */}
+    //         {/* <View style={[styles.box, {marginLeft: position}]}></View> */}
+    //         {/* animated library */}
+    //         {/* <Basic/> */}
+    //         {/* <BasicXY /> */}
+    //         {/* <InterPolation /> */}
+    //         {/* <AnimTypes /> */}
+    //         {/* <NestingFunction /> */}
+    //         {/* <AnimatedEvent/> */}
+    //         {/* <CustomAnimatedComponent /> */}
+    //         {/* <LayoutStrcAnimation /> */}
+    //         <ScrollEvent/>
+    //     </View>
+    // );
+
+    return <ScrollEvent />
 };
 
 
