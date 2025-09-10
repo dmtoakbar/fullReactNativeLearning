@@ -1,0 +1,141 @@
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  FlatList,
+  StyleSheet,
+} from "react-native";
+
+type Task = { id: string; text: string; completed: boolean };
+
+export default function TodoListScreenZustand() {
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [input, setInput] = useState("");
+  const [tab, setTab] = useState<"all" | "todo" | "finished">("all");
+
+  const addTask = () => {
+    if (input.trim().length === 0) return;
+    setTasks((prev) => [
+      ...prev,
+      { id: Date.now().toString(), text: input.trim(), completed: false },
+    ]);
+    setInput("");
+  };
+
+  const toggleTask = (id: string) => {
+    setTasks((prev) =>
+      prev.map((t) =>
+        t.id === id ? { ...t, completed: !t.completed } : t
+      )
+    );
+  };
+
+  const deleteTask = (id: string) => {
+    setTasks((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  const filteredTasks = tasks.filter((t) => {
+    if (tab === "finished") return t.completed;
+    if (tab === "todo") return !t.completed;
+    return true; // all
+  });
+
+  const renderItem = ({ item }: { item: Task }) => (
+    <View style={styles.taskItem}>
+      <TouchableOpacity onPress={() => toggleTask(item.id)} style={{ flex: 1 }}>
+        <Text style={[styles.taskText, item.completed && styles.completed]}>
+          {item.text}
+        </Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => deleteTask(item.id)}>
+        <Text style={styles.deleteBtn}>❌</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>📝 To-Do List</Text>
+
+      {/* Input */}
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter a new task"
+          value={input}
+          onChangeText={setInput}
+        />
+        <TouchableOpacity style={styles.addBtn} onPress={addTask}>
+          <Text style={styles.addText}>＋</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Tabs */}
+      <View style={styles.tabContainer}>
+        {["all", "todo", "finished"].map((t) => (
+          <TouchableOpacity
+            key={t}
+            style={[styles.tab, tab === t && styles.activeTab]}
+            onPress={() => setTab(t as typeof tab)}
+          >
+            <Text style={[styles.tabText, tab === t && styles.activeTabText]}>
+              {t.toUpperCase()}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* Task List */}
+      <FlatList
+        data={filteredTasks}
+        keyExtractor={(item) => item.id}
+        renderItem={renderItem}
+        ListEmptyComponent={<Text style={styles.emptyText}>No tasks 🚀</Text>}
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: "#f4f4f4", padding: 20 },
+  title: { fontSize: 24, fontWeight: "bold", marginBottom: 15, textAlign: "center" },
+  inputContainer: { flexDirection: "row", marginBottom: 20 },
+  input: {
+    flex: 1,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    height: 45,
+    backgroundColor: "#fff",
+  },
+  addBtn: {
+    backgroundColor: "#007bff",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 15,
+    borderRadius: 8,
+    marginLeft: 8,
+  },
+  addText: { color: "#fff", fontSize: 20, fontWeight: "bold" },
+  taskItem: {
+    flexDirection: "row",
+    backgroundColor: "#fff",
+    padding: 12,
+    marginBottom: 10,
+    borderRadius: 8,
+    alignItems: "center",
+    elevation: 2,
+  },
+  taskText: { fontSize: 16 },
+  completed: { textDecorationLine: "line-through", color: "gray" },
+  deleteBtn: { fontSize: 18, marginLeft: 10 },
+  emptyText: { textAlign: "center", marginTop: 50, fontSize: 16, color: "gray" },
+  tabContainer: { flexDirection: "row", justifyContent: "space-around", marginBottom: 15 },
+  tab: { paddingVertical: 6, paddingHorizontal: 16, borderRadius: 20, backgroundColor: "#e0e0e0" },
+  activeTab: { backgroundColor: "#007bff" },
+  tabText: { fontSize: 14, fontWeight: "600", color: "#333" },
+  activeTabText: { color: "#fff" },
+});

@@ -1,0 +1,513 @@
+3. Creating a Store
+
+👉 Example: A counter store.
+
+// store/counterStore.ts
+import { create } from "zustand";
+
+type CounterState = {
+  count: number;
+  increase: () => void;
+  decrease: () => void;
+  reset: () => void;
+};
+
+export const useCounterStore = create<CounterState>((set) => ({
+  count: 0,
+  increase: () => set((state) => ({ count: state.count + 1 })),
+  decrease: () => set((state) => ({ count: state.count - 1 })),
+  reset: () => set({ count: 0 }),
+}));
+
+
+4. Using Store in React Native Component
+
+import React from "react";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { useCounterStore } from "./store/counterStore";
+
+export default function CounterScreen() {
+  const { count, increase, decrease, reset } = useCounterStore();
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.count}>Count: {count}</Text>
+      <TouchableOpacity style={styles.btn} onPress={increase}>
+        <Text style={styles.btnText}>➕ Increase</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.btn} onPress={decrease}>
+        <Text style={styles.btnText}>➖ Decrease</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.btn} onPress={reset}>
+        <Text style={styles.btnText}>🔄 Reset</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, justifyContent: "center", alignItems: "center" },
+  count: { fontSize: 28, fontWeight: "bold", marginBottom: 20 },
+  btn: {
+    backgroundColor: "#007bff",
+    padding: 12,
+    marginVertical: 5,
+    borderRadius: 8,
+    width: 160,
+    alignItems: "center",
+  },
+  btnText: { color: "#fff", fontWeight: "600" },
+});
+
+5. Zustand with Multiple Stores
+
+You can have multiple stores (like Redux slices).
+
+👉 Example: auth store
+// store/authStore.ts
+import { create } from "zustand";
+
+type AuthState = {
+  user: string | null;
+  login: (name: string) => void;
+  logout: () => void;
+};
+
+export const useAuthStore = create<AuthState>((set) => ({
+  user: null,
+  login: (name) => set({ user: name }),
+  logout: () => set({ user: null }),
+}));
+
+Usage in a component:
+
+import React from "react";
+import { View, Text, TouchableOpacity } from "react-native";
+import { useAuthStore } from "./store/authStore";
+
+export default function AuthScreen() {
+  const { user, login, logout } = useAuthStore();
+
+  return (
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      {user ? (
+        <>
+          <Text>Welcome, {user} 👋</Text>
+          <TouchableOpacity onPress={logout}>
+            <Text>Logout</Text>
+          </TouchableOpacity>
+        </>
+      ) : (
+        <TouchableOpacity onPress={() => login("John Doe")}>
+          <Text>Login</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+}
+
+6. Zustand Persist (Save State across Reloads)
+
+Install AsyncStorage (Expo users can use expo-secure-store too):
+
+npm install @react-native-async-storage/async-storage
+
+Then use persist middleware:
+
+// store/todoStore.ts
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+type Task = { id: string; text: string; completed: boolean };
+type TodoState = {
+  tasks: Task[];
+  addTask: (text: string) => void;
+  toggleTask: (id: string) => void;
+};
+
+export const useTodoStore = create<TodoState>()(
+  persist(
+    (set) => ({
+      tasks: [],
+      addTask: (text) =>
+        set((state) => ({
+          tasks: [...state.tasks, { id: Date.now().toString(), text, completed: false }],
+        })),
+      toggleTask: (id) =>
+        set((state) => ({
+          tasks: state.tasks.map((t) =>
+            t.id === id ? { ...t, completed: !t.completed } : t
+          ),
+        })),
+    }),
+    {
+      name: "todo-storage", // key name in AsyncStorage
+      getStorage: () => AsyncStorage,
+    }
+  )
+);
+
+
+// store/todoStore.ts
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+type Task = { id: string; text: string; completed: boolean };
+type TodoState = {
+  tasks: Task[];
+  addTask: (text: string) => void;
+  toggleTask: (id: string) => void;
+};
+
+export const useTodoStore = create<TodoState>()(
+  persist(
+    (set) => ({
+      tasks: [],
+      addTask: (text) =>
+        set((state) => ({
+          tasks: [...state.tasks, { id: Date.now().toString(), text, completed: false }],
+        })),
+      toggleTask: (id) =>
+        set((state) => ({
+          tasks: state.tasks.map((t) =>
+            t.id === id ? { ...t, completed: !t.completed } : t
+          ),
+        })),
+    }),
+    {
+      name: "todo-storage", // key name in AsyncStorage
+      getStorage: () => AsyncStorage,
+    }
+  )
+);
+
+Now your todos stay even after app reload 🎉.
+
+7. Zustand Best Practices in React Native
+
+✅ Keep stores in a store/ folder
+✅ Use TypeScript for strong typing
+✅ Use multiple small stores instead of one big one
+✅ Use persist for caching user preferences or auth
+✅ Use selectors (useStore((s) => s.count)) for performance
+
+
+API Calls & Async Actions with Zustand
+
+Zustand works great with async logic. You can define async functions inside the store that handle API requests, then update state.
+
+// store/userStore.ts
+import { create } from "zustand";
+import axios from "axios";
+
+type User = { id: number; name: string; email: string };
+
+type UserState = {
+  users: User[];
+  loading: boolean;
+  error: string | null;
+  fetchUsers: () => Promise<void>;
+};
+
+export const useUserStore = create<UserState>((set) => ({
+  users: [],
+  loading: false,
+  error: null,
+  fetchUsers: async () => {
+    set({ loading: true, error: null });
+    try {
+      const res = await axios.get("https://jsonplaceholder.typicode.com/users");
+      set({ users: res.data, loading: false });
+    } catch (err) {
+      set({ error: "Failed to fetch users", loading: false });
+    }
+  },
+}));
+
+
+3. Usage in React Native Screen
+
+import React, { useEffect } from "react";
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet } from "react-native";
+import { useUserStore } from "./store/userStore";
+
+export default function UserScreen() {
+  const { users, loading, error, fetchUsers } = useUserStore();
+
+  useEffect(() => {
+    fetchUsers(); // call API when screen mounts
+  }, []);
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>👤 Users</Text>
+
+      {loading && <ActivityIndicator size="large" color="#007bff" />}
+      {error && <Text style={styles.error}>{error}</Text>}
+
+      <FlatList
+        data={users}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item }) => (
+          <View style={styles.userCard}>
+            <Text style={styles.name}>{item.name}</Text>
+            <Text style={styles.email}>{item.email}</Text>
+          </View>
+        )}
+      />
+
+      <TouchableOpacity style={styles.reloadBtn} onPress={fetchUsers}>
+        <Text style={styles.reloadText}>🔄 Reload</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: 20, backgroundColor: "#f4f4f4" },
+  title: { fontSize: 22, fontWeight: "bold", marginBottom: 10, textAlign: "center" },
+  error: { color: "red", textAlign: "center", marginBottom: 10 },
+  userCard: {
+    backgroundColor: "#fff",
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 10,
+    elevation: 2,
+  },
+  name: { fontSize: 16, fontWeight: "600" },
+  email: { fontSize: 14, color: "gray" },
+  reloadBtn: {
+    marginTop: 15,
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: "#007bff",
+    alignItems: "center",
+  },
+  reloadText: { color: "#fff", fontWeight: "bold" },
+});
+
+4. Example: Auth API with Async
+// store/authStore.ts
+import { create } from "zustand";
+import axios from "axios";
+
+type AuthState = {
+  user: any | null;
+  loading: boolean;
+  error: string | null;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => void;
+};
+
+export const useAuthStore = create<AuthState>((set) => ({
+  user: null,
+  loading: false,
+  error: null,
+  login: async (email, password) => {
+    set({ loading: true, error: null });
+    try {
+      const res = await axios.post("https://reqres.in/api/login", {
+        email,
+        password,
+      });
+      set({ user: { email, token: res.data.token }, loading: false });
+    } catch (err) {
+      set({ error: "Invalid credentials", loading: false });
+    }
+  },
+  logout: () => set({ user: null }),
+}));
+
+Usage:
+import React, { useState } from "react";
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator } from "react-native";
+import { useAuthStore } from "./store/authStore";
+
+export default function LoginScreen() {
+  const { user, login, logout, loading, error } = useAuthStore();
+  const [email, setEmail] = useState("eve.holt@reqres.in");
+  const [password, setPassword] = useState("cityslicka");
+
+  return (
+    <View style={{ flex: 1, justifyContent: "center", padding: 20 }}>
+      {user ? (
+        <>
+          <Text>Welcome, {user.email} 🎉</Text>
+          <TouchableOpacity onPress={logout}>
+            <Text>Logout</Text>
+          </TouchableOpacity>
+        </>
+      ) : (
+        <>
+          <TextInput
+            value={email}
+            onChangeText={setEmail}
+            placeholder="Email"
+            style={{ borderWidth: 1, marginBottom: 10, padding: 8 }}
+          />
+          <TextInput
+            value={password}
+            onChangeText={setPassword}
+            placeholder="Password"
+            secureTextEntry
+            style={{ borderWidth: 1, marginBottom: 10, padding: 8 }}
+          />
+          {loading ? (
+            <ActivityIndicator />
+          ) : (
+            <TouchableOpacity
+              onPress={() => login(email, password)}
+              style={{ padding: 12, backgroundColor: "blue" }}
+            >
+              <Text style={{ color: "#fff" }}>Login</Text>
+            </TouchableOpacity>
+          )}
+          {error && <Text style={{ color: "red" }}>{error}</Text>}
+        </>
+      )}
+    </View>
+  );
+}
+
+5. Async + Persist Combo (e.g., Save Auth Token)
+
+You can combine async API calls + persist middleware to keep the user logged in after reload:
+
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
+
+type AuthState = {
+  user: any | null;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => void;
+};
+
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      user: null,
+      login: async (email, password) => {
+        const res = await axios.post("https://reqres.in/api/login", {
+          email,
+          password,
+        });
+        set({ user: { email, token: res.data.token } });
+      },
+      logout: () => set({ user: null }),
+    }),
+    { name: "auth-storage", getStorage: () => AsyncStorage }
+  )
+);
+
+Now even if you close the app, the user stays logged in until they logout.
+
+
+================= larger application=======================
+In a large React Native application, when using Zustand, you typically organize your stores by feature/module, not just throw everything in one global store.
+
+Here’s a breakdown 👇
+
+Option 2: Multiple Stores (Recommended for large apps)
+
+You split into domain-specific stores.
+Example structure:
+
+src/
+ └── store/
+      ├── authStore.ts
+      ├── todoStore.ts
+      ├── settingsStore.ts
+      └── uiStore.ts
+
+
+
+authStore.ts
+
+import { create } from "zustand";
+import axios from "axios";
+
+interface AuthState {
+  user: { name: string; token: string } | null;
+  loading: boolean;
+  login: (username: string, password: string) => Promise<void>;
+  logout: () => void;
+}
+
+const useAuthStore = create<AuthState>((set) => ({
+  user: null,
+  loading: false,
+  login: async (username, password) => {
+    set({ loading: true });
+    try {
+      const res = await axios.post("https://example.com/login", { username, password });
+      set({ user: res.data, loading: false });
+    } catch (err) {
+      set({ loading: false });
+      console.error("Login failed", err);
+    }
+  },
+  logout: () => set({ user: null }),
+}));
+
+export default useAuthStore;
+
+
+todoStore.ts
+
+import { create } from "zustand";
+import axios from "axios";
+
+interface Todo {
+  id: string;
+  text: string;
+  completed: boolean;
+}
+
+interface TodoState {
+  todos: Todo[];
+  loading: boolean;
+  fetchTodos: () => Promise<void>;
+  addTodo: (text: string) => void;
+  toggleTodo: (id: string) => void;
+}
+
+const useTodoStore = create<TodoState>((set) => ({
+  todos: [],
+  loading: false,
+  fetchTodos: async () => {
+    set({ loading: true });
+    try {
+      const res = await axios.get("https://jsonplaceholder.typicode.com/todos?_limit=5");
+      set({ todos: res.data, loading: false });
+    } catch (err) {
+      set({ loading: false });
+      console.error(err);
+    }
+  },
+  addTodo: (text) =>
+    set((state) => ({
+      todos: [...state.todos, { id: Date.now().toString(), text, completed: false }],
+    })),
+  toggleTodo: (id) =>
+    set((state) => ({
+      todos: state.todos.map((t) =>
+        t.id === id ? { ...t, completed: !t.completed } : t
+      ),
+    })),
+}));
+
+export default useTodoStore;
+
+
+🔑 Which approach to use?
+
+Small app: One store (quick and simple).
+
+Medium/Large app: Multiple stores (domain-specific: authStore, todoStore, settingsStore).
+
+Shared/global UI states (darkMode, sidebar, modals): You can keep in a dedicated uiStore.
+
