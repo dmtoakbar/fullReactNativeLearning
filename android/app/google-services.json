@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "468190939177",
+    "project_id": "notification-setup-b3d1c",
+    "storage_bucket": "notification-setup-b3d1c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:468190939177:android:441d5c979dedf05a853438",
+        "android_client_info": {
+          "package_name": "com.fullreactnativelearning"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDpV7L9ZEgIKABlmzJtQ9F5EaWclFRCPeM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

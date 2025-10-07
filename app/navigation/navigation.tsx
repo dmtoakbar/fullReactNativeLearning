@@ -9,7 +9,7 @@ const Stack = createNativeStackNavigator();
 
 const AppNavigation = () => {
   return (
-    <Stack.Navigator initialRouteName="todo-list-zustand">
+    <Stack.Navigator initialRouteName="register-for-notification">
       {routeNames.map(({ name, component }) => (
         <Stack.Screen
           key={name}

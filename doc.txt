@@ -1,0 +1,834 @@
+
+REACT NATIVE — COMPLETE NOTEBOOK (EXTENDED: EVERYTHING — BEST EFFORT)
+==================================================================
+Generated: Extended comprehensive guide covering core components, exhaustive props/methods for major components, APIs, community modules, platform-specific items, migration notes, native module authoring, debugging, testing, performance, accessibility, CI/CD, and many examples.
+Note: "Everything" for React Native is extremely large and constantly changing. This file is a best-effort snapshot covering core & widely-used items (as of 2025). For absolute exhaustiveness (every prop every version, every niche module), point me to what to expand next — I can keep adding.
+
+HOW TO USE THIS FILE
+--------------------
+- Search (Ctrl+F) for a component or API name.
+- Each major component includes: description, full prop summary (most common + extended), notes, and at least one example.
+- Community modules include install + quick usage notes.
+- Sections are organized from core UI to advanced topics and platform-specific details.
+
+TABLE OF CONTENTS
+-----------------
+1. Core UI Components (detailed)
+2. Lists & Virtualization (FlatList, SectionList, VirtualizedList)
+3. Inputs & Forms (TextInput, Picker, DatePickers)
+4. Touch & Gestures (Pressable, Touchables, Gesture Handler)
+5. Media Components (Image, ImageBackground, WebView, Video notes)
+6. Modals, Portals, Overlays
+7. Animation (Animated, LayoutAnimation, Reanimated)
+8. Keyboard & Input Management
+9. APIs & Utilities (Dimensions, Linking, Clipboard, etc.)
+10. Storage, Networking & Permissions (AsyncStorage, NetInfo, etc.)
+11. Native Modules & Bridging (how to write native modules)
+12. Platform-specific components (TV, macOS, Windows, Wearables)
+13. Community Modules (list with examples)
+14. Accessibility (extensive)
+15. Performance & Optimization (profiling, useNativeDriver, virtualization)
+16. Testing & Debugging (Jest, Detox, Flipper)
+17. Security & Release (code signing, obfuscation, app store tips)
+18. Migration & Versioning Notes
+19. Full Example App (multi-file structure) + snippets
+20. Appendix: Quick reference lists (all core components names + brief one-line meaning)
+
+SECTION 1 — CORE UI COMPONENTS (DETAILED)
+-----------------------------------------
+Note: For each component I list common props then an extended prop list (major props you will see in RN docs). Not every micro-prop listed for very niche platform flags — but the heavy hitters are here.
+
+==================================================
+Component: View
+==================================================
+Description:
+- Container for layout, supports Flexbox, transforms, opacity, zIndex, hitSlop via children, accessibility props and native view optimizations.
+
+Common props (short):
+- style, children, pointerEvents, accessible, accessibilityLabel, accessibilityRole, testID, onLayout, hitSlop, collapsable (Android), removeClippedSubviews (performance), shouldRasterizeIOS, accessibilityState
+
+Extended props / details:
+- nativeID, accessibilityLiveRegion, focusable, importantForAccessibility, accessibilityActions, onAccessibilityAction, onStartShouldSetResponder, onMoveShouldSetResponder, onResponderGrant, onResponderMove, onResponderRelease, onResponderTerminate, shouldRasterizeIOS, needsOffscreenAlphaCompositing, accessibilityElementsHidden, accessibilityViewIsModal
+
+Notes:
+- Use `removeClippedSubviews` on very long lists of static children (careful: can cause issues with layout updates).
+- Use `collapsable={false}` when you need the view's native node to exist even if it has no children (useful with native modules).
+
+Example (layout container):
+```js
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+export default function ExampleView() {
+  return (
+    <View style={styles.container}>
+      <Text>Centered</Text>
+    </View>
+  );
+}
+const styles = StyleSheet.create({
+  container: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+});
+```
+
+==================================================
+Component: Text
+==================================================
+Description:
+- Displays text; supports nested Text blocks, inline images, selectable text, truncation, font scaling.
+
+Common props:
+- style, numberOfLines, ellipsizeMode, selectable, onPress, allowFontScaling, adjustsFontSizeToFit, minimumFontScale, maxFontSizeMultiplier, testID, accessibilityRole
+
+Extended props:
+- selectionColor, onLongPress, textBreakStrategy (Android), suppressHighlighting, selectionState, dataDetectorType (iOS), onTextLayout
+
+Notes:
+- Nesting `<Text>` children allows inline styling; parent styles cascade.
+- Use `adjustsFontSizeToFit` and `minimumFontScale` for dynamic size adjustments.
+
+Example:
+```js
+import React from 'react';
+import { Text } from 'react-native';
+export default function ExampleText() {
+  return <Text numberOfLines={2}>This text demonstrates truncation with numberOfLines</Text>;
+}
+```
+
+==================================================
+Component: Image
+==================================================
+Description:
+- Image rendering from network/local/resource/data URI. Supports progressive loading, caching behaviors (platform-specific), resizeMode and onLoad events.
+
+Common props:
+- source, style, resizeMode, onLoad, onError, defaultSource (iOS), progressiveRenderingEnabled (Android), accessibilityLabel, accessible, testID
+
+Extended props:
+- fadeDuration (Android), onLoadStart, onLoadEnd, onPartialLoad, cache (deprecated platforms; use FastImage), loadingIndicatorSource, accessibilityIgnoresInvertColors, capInsets (for 9-patch-like stretching), tintColor
+
+Notes:
+- For advanced caching and headers, prefer community packages like `react-native-fast-image`.
+- On Android use `resizeMode` mapping; on iOS the `defaultSource` is useful for placeholders.
+
+Example:
+```js
+import React from 'react';
+import { Image } from 'react-native';
+export default function ExampleImage() {
+  return <Image source={{uri:'https://reactnative.dev/img/tiny_logo.png'}} style={{width:64,height:64}} />;
+}
+```
+
+==================================================
+Component: ScrollView
+==================================================
+Description:
+- Generic scroll container; supports both horizontal and vertical scrolling, nested scrollviews (careful), keyboard handling, refresh control, sticky headers.
+
+Common props:
+- horizontal, contentContainerStyle, onScroll, scrollEnabled, pagingEnabled, refreshControl, keyboardShouldPersistTaps, nestedScrollEnabled, showsHorizontalScrollIndicator, showsVerticalScrollIndicator, pagingEnabled, scrollEventThrottle, directionalLockEnabled
+
+Extended props:
+- scrollTo, scrollToEnd (methods via ref), maintainVisibleContentPosition (for chat-like UIs), overScrollMode, decelerationRate, snapToInterval, snapToOffsets, snapToStart, disableIntervalMomentum
+
+Notes:
+- Avoid ScrollView for long lists — use FlatList/SectionList with virtualization.
+
+Example:
+```js
+import React from 'react';
+import { ScrollView, Text } from 'react-native';
+export default function ExampleScrollView(){
+  return <ScrollView><Text>Many items...</Text></ScrollView>;
+}
+```
+
+==================================================
+Component: FlatList
+==================================================
+Description:
+- Efficient scrollable list with virtualization. Renders only visible rows plus buffer.
+
+Major props (extended):
+- data, renderItem, keyExtractor, horizontal, initialNumToRender, maxToRenderPerBatch, windowSize, removeClippedSubviews, onEndReached, onEndReachedThreshold, ListHeaderComponent, ListFooterComponent, ListEmptyComponent, numColumns, columnWrapperStyle, getItemLayout, extraData, inverted, showsVerticalScrollIndicator, refreshing, onRefresh, progressViewOffset, maintainVisibleContentPosition, legacyImplementation
+
+Methods via ref:
+- scrollToIndex, scrollToOffset, recordInteraction, flashScrollIndicators
+
+Notes & performance tips:
+- Provide stable keys through keyExtractor.
+- Optimize renderItem by memoizing row components (`React.memo`) and avoid inline functions.
+- If all rows are same height, implement `getItemLayout` for fast scrollToIndex and better perf.
+- Tune `windowSize`, `initialNumToRender`, and `maxToRenderPerBatch` for device and list characteristics.
+
+Example:
+```js
+import React from 'react';
+import { FlatList, Text } from 'react-native';
+export default function ExampleFlatList(){
+  const data = Array.from({length:100}).map((_,i)=>({id:String(i), title:'Item '+i}));
+  return (
+    <FlatList
+      data={data}
+      keyExtractor={(item)=>item.id}
+      renderItem={({item})=> <Text style={{padding:10}}>{item.title}</Text>}
+    />
+  );
+}
+```
+
+==================================================
+Component: SectionList
+==================================================
+Description:
+- FlatList variant for sections (grouped lists).
+
+Major props:
+- sections, renderItem, renderSectionHeader, renderSectionFooter, keyExtractor, stickySectionHeadersEnabled, SectionSeparatorComponent, ItemSeparatorComponent, ListHeaderComponent
+
+Notes:
+- Sections is an array of `{ title, data }` objects. Use `keyExtractor` for stable keys.
+
+Example:
+```js
+import React from 'react';
+import { SectionList, Text } from 'react-native';
+export default function ExampleSectionList(){
+  const sections = [{title:'A',data:['A1','A2']},{title:'B',data:['B1']}];
+  return <SectionList sections={sections} keyExtractor={(i,idx)=>i+idx} renderItem={({item})=> <Text>{item}</Text>} renderSectionHeader={({section})=> <Text>{section.title}</Text>} />;
+}
+```
+
+==================================================
+Component: VirtualizedList
+==================================================
+Description:
+- Low-level component implementing virtualization used by FlatList/SectionList.
+Major props include: `data` is not required — you provide `getItem`, `getItemCount`, `renderItem`, `keyExtractor`, `initialNumToRender`, `windowSize`, etc.
+Notes:
+- Use for custom virtualization patterns.
+
+==================================================
+Component: TextInput
+==================================================
+Description:
+- Text input control supporting many keyboard features, secure text, multiline, autoComplete, spellCheck, inputAccessoryViewID (iOS), and composition events.
+
+Common props (extensive):
+- value, defaultValue, onChangeText, onChange, placeholder, placeholderTextColor, secureTextEntry, keyboardType, autoCorrect, autoCapitalize, multiline, numberOfLines, editable, selectTextOnFocus, onFocus, onBlur, onSubmitEditing, returnKeyType, blurOnSubmit, textContentType (iOS), autoComplete, contextMenuHidden, maxLength, selection, selectionColor, allowFontScaling, clearButtonMode (iOS), clearTextOnFocus (Android), importantForAutofill, inputAccessoryViewID
+
+Notes:
+- Controlled vs uncontrolled: prefer controlled (`value` + `onChangeText`) for predictable behavior.
+- For forms consider libraries: `react-hook-form` + `Controller` wrappers.
+
+Example:
+```js
+import React, {useState} from 'react';
+import { TextInput, View } from 'react-native';
+export default function ExampleTextInput(){ const [t,setT]=useState(''); return <TextInput value={t} onChangeText={setT} placeholder="Type" />; }
+```
+
+==================================================
+Component: Pressable
+==================================================
+Description:
+- Modern press interaction primitive with state callbacks and press styling.
+Props:
+- onPress, onPressIn, onPressOut, onLongPress, delayLongPress, android_ripple (Android-only), style (function receives pressed boolean), hitSlop, pressRetentionOffset, disabled, accessibilityRole
+
+Example:
+```js
+import React from 'react';
+import { Pressable, Text } from 'react-native';
+export default function ExamplePressable(){ return <Pressable onPress={()=>{}} style={({pressed})=>[{padding:10, opacity: pressed?0.7:1}]}><Text>Press</Text></Pressable>; }
+```
+
+==================================================
+Component: TouchableOpacity / TouchableHighlight / TouchableWithoutFeedback
+==================================================
+Description:
+- Older touch primitives offering opacity/underlay feedback. Use Pressable for new code.
+Props (common):
+- onPress, onLongPress, activeOpacity (Opacity), underlayColor (Highlight), delayPressIn, delayPressOut, disabled, hitSlop, delayLongPress
+
+Notes:
+- TouchableWithoutFeedback is useful when you want no visual feedback but need touch handling.
+
+Example (TouchableOpacity):
+```js
+import React from 'react';
+import { TouchableOpacity, Text } from 'react-native';
+export default function ExampleTouchable(){ return <TouchableOpacity onPress={()=>alert('tap')}><Text>Tap</Text></TouchableOpacity>; }
+```
+
+==================================================
+Component: Button
+==================================================
+Description:
+- Simple cross-platform button. Very limited styling; use Pressable for custom UI.
+Props:
+- title, onPress, color, disabled, accessibilityLabel
+
+Example:
+```js
+import React from 'react';
+import { Button } from 'react-native';
+export default function ExampleButton(){ return <Button title="Click" onPress={()=>{}} />; }
+```
+
+==================================================
+Component: Modal
+==================================================
+Description:
+- Native modal overlay. Can be animated, transparent, and supports onRequestClose (Android back button).
+Props (major):
+- visible, animationType ('none'|'slide'|'fade'), transparent, presentationStyle (iOS), supportedOrientations, onRequestClose, onShow, onDismiss, hardwareAccelerated (Android)
+
+Notes:
+- When transparent, the modal content is rendered on top of previous screen — ensure accessibility focus management.
+- For complex modals consider `react-native-modal` (community) or React Navigation modal screens.
+
+Example:
+```js
+import React, {useState} from 'react';
+import { Modal, View, Text, Button } from 'react-native';
+export default function ExampleModal(){ const [v,setV]=useState(true); return (<Modal visible={v} transparent><View style={{flex:1,justifyContent:'center',alignItems:'center'}}><View style={{width:300,height:200,background:'white'}}><Text>Modal</Text><Button title="Close" onPress={()=>setV(false)} /></View></View></Modal>); }
+```
+
+==================================================
+Component: ActivityIndicator
+==================================================
+Description:
+- Spinner for loading states.
+Props:
+- animating (bool), size ('small'|'large'|number), color, hidesWhenStopped (Android legacy)
+
+Example:
+```js
+import React from 'react';
+import { ActivityIndicator } from 'react-native';
+export default function ExampleSpinner(){ return <ActivityIndicator size="large" />; }
+```
+
+==================================================
+Component: SafeAreaView
+==================================================
+Description:
+- Adds safe area padding on iOS (and Android via emulation). Use to prevent content under notches.
+Props:
+- style, edges (react-native-safe-area-context alternative gives edge control)
+
+Notes:
+- Prefer `react-native-safe-area-context` for consistent cross-platform behavior and hooks (useSafeAreaInsets).
+
+==================================================
+Component: StatusBar
+==================================================
+Description:
+- Control status bar appearance.
+Props:
+- barStyle, backgroundColor, hidden, translucent, networkActivityIndicatorVisible (iOS legacy)
+
+Notes:
+- For per-screen control use React Navigation's status bar integration or `expo-status-bar` in Expo.
+
+Example:
+```js
+import React from 'react';
+import { StatusBar } from 'react-native';
+export default function ExampleStatusBar(){ return <StatusBar barStyle="dark-content" />; }
+```
+
+==================================================
+Component: KeyboardAvoidingView
+==================================================
+Description:
+- Adjusts view behavior when keyboard shown (padding/position/height).
+Props:
+- behavior ('height'|'position'|'padding'), keyboardVerticalOffset, style, enabled
+
+Notes:
+- Use with care; combine with ScrollView for complex forms or use third-party `react-native-keyboard-aware-scroll-view`.
+
+Example:
+```js
+import React from 'react';
+import { KeyboardAvoidingView, TextInput, Platform } from 'react-native';
+export default function ExampleKAV(){ return (<KeyboardAvoidingView behavior={Platform.OS==='ios'?'padding':'height'} style={{flex:1}}><TextInput placeholder="Hello"/></KeyboardAvoidingView>); }
+```
+
+==================================================
+Component: RefreshControl
+==================================================
+Description:
+- Pull-to-refresh control for ScrollView/FlatList.
+Props:
+- refreshing (bool), onRefresh, colors (Android), tintColor (iOS), title, titleColor
+
+Example:
+(see earlier example in notebook)
+
+==================================================
+Component: ImageBackground
+==================================================
+Description:
+- Image as background container with children.
+Props:
+- source, resizeMode, imageStyle, style, blurRadius (iOS), overlayColor (platform variants)
+
+Example:
+```js
+import React from 'react';
+import { ImageBackground, Text } from 'react-native';
+export default function ExampleImageBG(){ return (<ImageBackground source={{uri:'https://...'}} style={{width:'100%',height:200}}><Text>Overlay</Text></ImageBackground>); }
+```
+
+==================================================
+Component: WebView (react-native-webview)
+==================================================
+Description:
+- Embeds web content; moved to `react-native-webview` community package.
+Quick install:
+- npm install react-native-webview
+Example:
+```js
+import React from 'react';
+import { WebView } from 'react-native-webview';
+export default function ExampleWebView(){ return <WebView source={{uri:'https://reactnative.dev'}} />; }
+```
+
+==================================================
+Component: KeyboardAvoidingView, Modal (covered), Pressable, etc. (others continued below)
+--------------------------------------------------------------------------------------------
+
+SECTION 2 — MORE CORE/UTILITY COMPONENTS (BRIEF)
+------------------------------------------------
+- SafeAreaProvider / useSafeAreaInsets (react-native-safe-area-context) — recommended over built-in SafeAreaView for cross-platform.
+- MaskedViewIOS (iOS-only) — masking views.
+- SegmentedControlIOS (moved to community)
+- TouchableNativeFeedback (Android ripple effect) — use for material ripple on Android.
+- DrawerLayoutAndroid — Android-only drawer layout.
+- TVFocusGuideView / TVEventHandler — tvOS/Android TV interactions.
+- AccessibilityInfo — listen to screen reader changes.
+- Modal, Portal (from react-native-paper), Host (for portals) — for portal rendering.
+
+SECTION 3 — INPUTS & FORMS (DETAILED)
+-------------------------------------
+Includes TextInput (already detailed), Picker, Date/Time pickers, Switch, Slider (community), SegmentedControl (community).
+
+Component: Switch
+- Props: value, onValueChange, thumbColor, trackColor, disabled, ios_backgroundColor
+Example:
+```js
+import React, {useState} from 'react';
+import { Switch } from 'react-native';
+export default function ExampleSwitch(){ const [v,setV]=useState(false); return <Switch value={v} onValueChange={setV} />; }
+```
+
+Component: Picker (moved to @react-native-picker/picker)
+- Install: npm install @react-native-picker/picker
+- Example:
+```js
+import {Picker} from '@react-native-picker/picker';
+```
+
+Date & Time pickers (community):
+- @react-native-community/datetimepicker (native date/time pickers)
+- Example usage in docs.
+
+Form helpers:
+- react-hook-form (recommended), formik (older but popular), yup for validation
+
+SECTION 4 — TOUCH & GESTURES (DETAILED)
+---------------------------------------
+React Native's built-in responder system works, but for complex gestures use `react-native-gesture-handler` and `react-native-reanimated`.
+
+Library: react-native-gesture-handler
+- Install and set up native linking per docs (Android MainActivity/RootView changes for older versions).
+- Provides: TapGestureHandler, PanGestureHandler, FlingGestureHandler, LongPressGestureHandler, NativeViewGestureHandler, GestureHandlerRootView, DrawerLayout, Swipeable.
+
+Example (PanGestureHandler basic):
+```js
+import { PanGestureHandler } from 'react-native-gesture-handler';
+// Use with onGestureEvent and Animated; see docs for Reanimated 2 hooks integration.
+```
+
+Library: react-native-reanimated (v2+)
+- Provides declarative worklets, shared values, animated styles, gesture integration.
+- Use `useSharedValue`, `useAnimatedStyle`, `withSpring` etc. See docs for config (babel plugin required).
+
+SECTION 5 — MEDIA (AUDIO/VIDEO/IMAGES)
+-------------------------------------
+Video:
+- Use `react-native-video` for native video playback with many props (source, controls, paused, resizeMode, onBuffer, onError, onLoadStart, onProgress, onEnd).
+Audio:
+- Libraries: `react-native-track-player`, `react-native-sound`, `react-native-audio-toolkit`.
+Images:
+- `react-native-fast-image` for better caching and performance.
+
+SECTION 6 — MODALS, PORTALS, OVERLAYS
+-------------------------------------
+- `Modal` built-in is simple; for more features use `react-native-modal` (animations, backdrops), `react-native-paper`'s `Portal`, or React Navigation's modal screens.
+- Portals help render UI outside normal hierarchy (e.g., toast, dropdown). Use `react-native-portalize` or `react-native-paper` Portal.
+
+SECTION 7 — ANIMATION (DETAILED)
+---------------------------------
+A. Animated (core)
+- Animated.Value, Animated.ValueXY, Animated.timing, Animated.spring, Animated.decay, Animated.parallel, Animated.sequence, Animated.stagger, Animated.loop, Animated.event, interpolate, useNativeDriver (boost performance but limits to non-layout props).
+- Example (fade-in):
+```js
+const opacity = useRef(new Animated.Value(0)).current;
+useEffect(()=> Animated.timing(opacity,{toValue:1,duration:300,useNativeDriver:true}).start(),[]);
+<Animated.View style={{opacity}} />
+```
+
+B. LayoutAnimation
+- Animates layout changes (height/position) automatically but limited platform support and configuration.
+
+C. Reanimated (v2+)
+- Use worklets and shared values for complex, high-performance interactions. Example patterns include gesture-driven animations, scroll-linked animations.
+
+D. Lottie
+- Use `lottie-react-native` for vector animations and micro-interactions.
+
+SECTION 8 — KEYBOARD & INPUT MANAGEMENT
+---------------------------------------
+APIs:
+- Keyboard (dismiss, addListener('keyboardDidShow'/'keyboardDidHide', cb))
+- KeyboardAvoidingView, KeyboardDismissMode for ScrollView
+Third-party:
+- `react-native-keyboard-aware-scroll-view` for robust form handling with keyboards.
+
+SECTION 9 — APIS & UTILITIES (COMPREHENSIVE)
+---------------------------------------------
+Below are core APIs with usage snippets and notable methods.
+
+Dimensions
+- get('window'|'screen'), addEventListener('change', handler)
+
+PixelRatio
+- get(), getFontScale(), roundToNearestPixel()
+
+Platform
+- OS ('ios'|'android'|'web'|'windows'|'macos'), Version, select({ios:..., android:...})
+
+Linking
+- openURL(url), canOpenURL(url), getInitialURL(), addEventListener('url', handler), removeEventListener
+
+Alert
+- Alert.alert(title, message?, buttons?, options?), prompt (platform-specific), multiple buttons support
+
+AppState
+- AppState.currentState, addEventListener('change', handler), removeEventListener
+
+AsyncStorage (community)
+- getItem, setItem, removeItem, multiGet, multiSet
+Example:
+```js
+import AsyncStorage from '@react-native-async-storage/async-storage';
+await AsyncStorage.setItem('@key','value');
+const v = await AsyncStorage.getItem('@key');
+```
+
+NetInfo (community)
+- fetch(), addEventListener(callback), getConnectionInfo()
+
+PermissionsAndroid
+- request(permission), check(permission), requestMultiple([...]) — Android-only runtime permissions
+
+Clipboard (community)
+- setString, getString
+
+ImagePicker (community)
+- react-native-image-picker: launchCamera, launchImageLibrary
+
+Geolocation
+- Moved out from core — use `@react-native-community/geolocation` or community alternatives with permission handling.
+
+Storage & FileSystem
+- `react-native-fs` for file read/write operations, downloads, uploads, and base64 handling.
+
+NativeModules
+- Access native modules, e.g. `NativeModules.YourModule.method()`; requires native implementation and registration.
+
+UIManager
+- dispatchViewManagerCommand, measure, measureInWindow, setLayoutAnimationEnabledExperimental (Android)
+
+InteractionManager
+- runAfterInteractions(fn) — schedule lower-priority tasks
+
+SECTION 10 — NETWORKING & SOCKETS
+---------------------------------
+- Use `fetch` (global) or `axios` for HTTP. For websockets use `WebSocket` global or libraries like `socket.io-client`.
+- For real-time and offline sync consider libraries: `realm`, `WatermelonDB`, `pouchdb`, or custom sync with GraphQL subscriptions (Apollo) or Hasura.
+
+SECTION 11 — SECURITY & AUTH
+----------------------------
+- Store tokens in secure storage: `react-native-keychain` or `react-native-sensitive-info` for secure credential storage; avoid AsyncStorage for secrets.
+- Use HTTPS with certificate pinning (e.g., `react-native-ssl-pinning` / `react-native-https`).
+- Obfuscate JS bundle with source map handling and minimize stack traces in release builds.
+- Use platform-specific secure enclaves (Biometrics via `react-native-touch-id`/`react-native-biometrics`).
+
+SECTION 12 — NATIVE MODULES & BRIDGING (GUIDE)
+----------------------------------------------
+A. When to write native modules:
+- You need access to platform APIs not available in JS or existing packages don't meet requirements.
+
+B. High-level process (Android + iOS):
+1. Define JS interface (module name, method signatures) using `NativeModules` or TurboModules (new architecture) — prefer TurboModules if building for performance and RN new arch.
+2. Implement native class (Java/Kotlin for Android, ObjC/Swift for iOS).
+3. Export methods and constants to JS with proper threading and callbacks/promises.
+4. Register the module in package (Android: create ReactPackage; iOS: RCT_EXPORT_MODULE in ObjC or annotations in Swift bridge files).
+5. Write JS wrapper for better ergonomics and type definitions (TypeScript types).
+
+C. Example skeleton (Android Java):
+```java
+public class MyToastModule extends ReactContextBaseJavaModule {
+  MyToastModule(ReactApplicationContext context) { super(context); }
+  @Override public String getName(){ return "MyToast"; }
+  @ReactMethod public void show(String message, int duration) {
+    Toast.makeText(getReactApplicationContext(), message, duration).show();
+  }
+}
+```
+iOS Objective-C minimal example:
+```objc
+#import <React/RCTBridgeModule.h>
+@interface RCT_EXTERN_MODULE(MyToast, NSObject)
+RCT_EXTERN_METHOD(show:(NSString *)message duration:(nonnull NSNumber *)duration)
+@end
+```
+
+D. TurboModules & Fabric:
+- New architecture uses JSI, TurboModules and Fabric UI layer for synchronous native access and better performance. Consider this for high-performance modules but expect more complexity.
+
+E. Building & releasing native modules:
+- Provide proper installation docs, autolinking support (RN>=0.60), CocoaPods for iOS, Gradle config for Android. Provide prebuilt binaries where feasible and CI builds.
+
+SECTION 13 — PLATFORM-SPECIFIC (TV, macOS, Windows, Web)
+----------------------------------------------------------
+React Native supports multiple targets. Each target has platform-specific components & APIs.
+
+A. tvOS / Android TV
+- Components: `TVEventHandler`, `TVMenuControl`, `isTVOS`, `TVFocusGuideView`.
+- Use `react-native-tvos` fork and follow focus-handling best practices.
+
+B. Windows & macOS
+- `react-native-windows`, `react-native-macos` provide native controls (Flyout, MenuBar, etc.). Install per docs.
+
+C. Web
+- `react-native-web` maps RN components to DOM. Use for cross-platform web apps.
+
+SECTION 14 — COMMUNITY MODULES (EXTENSIVE LIST & Quick Examples)
+----------------------------------------------------------------
+(Install with npm/yarn and follow their native setup if required)
+- @react-native-async-storage/async-storage — persistent K/V
+- @react-native-community/netinfo — network status
+- @react-native-community/slider — slider input
+- @react-native-picker/picker — picker
+- react-native-webview — web content
+- react-native-gesture-handler — gestures
+- react-native-reanimated — advanced animations
+- react-navigation + react-native-screens + react-native-safe-area-context — navigation stack
+- react-native-vector-icons — icon fonts
+- react-native-fs — filesystem access
+- react-native-image-picker — camera/gallery
+- react-native-permissions — unified permissions API
+- react-native-keychain — secure storage
+- react-native-fast-image — fast image loader+cache
+- react-native-modal — enhanced modal with animations
+- lottie-react-native — animations
+- react-native-ble-plx — Bluetooth
+- realm — offline DB & sync capabilities
+- watermelondb — high-performance DB for RN
+- react-native-push-notification / notifee / @react-native-firebase/messaging — push notifications
+- react-native-appearance / expo-appearance — theme detection
+- react-native-config — environment variables handling
+- react-native-device-info — device metadata
+- react-native-screens — optimized native screens (for navigation)
+- flipper plugin libraries — debugging tools
+
+Quick example: AsyncStorage, NetInfo, FastImage
+```js
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import NetInfo from '@react-native-community/netinfo';
+import FastImage from 'react-native-fast-image';
+// Usage examples in docs for each library.
+```
+
+SECTION 15 — ACCESSIBILITY (EXTENSIVE)
+--------------------------------------
+Key principles:
+- Build accessible apps from start; test with VoiceOver (iOS) / TalkBack (Android).
+- Use semantic roles and labels: accessibilityRole, accessibilityLabel, accessibilityHint, accessibilityState.
+- Focus management: ensure modals trap focus; move focus on navigation changes where appropriate.
+- Dynamic type: allow fonts to scale with user preferences: `allowFontScaling` and use `AccessibilityInfo` to detect reduce motion, screen reader status.
+- Touch target size: minimum 44x44 points recommended.
+- Color contrast: ensure sufficient contrast (WCAG AA ideally).
+- Announcements: AccessibilityInfo.announceForAccessibility('message') for status updates.
+- Test with automated tools and manual testing with screen readers.
+
+SECTION 16 — PERFORMANCE & OPTIMIZATION (DETAILED)
+---------------------------------------------------
+Principles:
+- Minimize JS work on main thread: avoid heavy synchronous loops, use `InteractionManager` for low-priority tasks.
+- Use `useNativeDriver` for animations where possible (transform, opacity — not layout).
+- Virtualize lists with FlatList and SectionList. Provide `getItemLayout` if possible.
+- Avoid inline styles/objects recreated each render — memoize styles or use `StyleSheet.create`.
+- Memoize components with `React.memo` and use `useCallback` for handlers.
+- Use `shouldComponentUpdate` / `PureComponent` for class-based components.
+- Optimize images: resize on server or use correct size; use `FastImage` for caching and headers.
+- Reduce bundle size: remove unused dependencies, use Proguard (Android) and Bitcode settings (iOS), enable Hermes (JS engine) for smaller runtime and faster startup on Android/iOS (Hermes for iOS available in newer RN versions).
+- Use Hermes and enable inline require (ram-bundles) for faster startup.
+
+Profiling tools:
+- Flipper (React DevTools, layout inspector, network, Hermes debugger)
+- Android Studio Profiler, Xcode Instruments (Time Profiler, Allocations)
+- `why-did-you-render` library for detecting unnecessary re-renders
+
+SECTION 17 — TESTING & DEBUGGING
+---------------------------------
+Unit tests:
+- Jest + react-test-renderer for snapshots and unit tests. Mock native modules appropriately.
+
+Integration/E2E:
+- Detox (native E2E automation), Appium, or Cypress (web) for cross-platform steps.
+
+Debugging tools:
+- React DevTools (in Flipper), Redux DevTools, Flipper plugins, native logcat and Xcode console.
+- Use `console.warn` and `LogBox` controls during dev.
+
+SECTION 18 — CI/CD & RELEASES
+-----------------------------
+Android:
+- Keystore management, signing configs in Gradle, Proguard rules, build flavors.
+
+iOS:
+- Provisioning profiles, Fastlane for automated builds and uploads, symbolication of crash logs, bitcode considerations.
+- Use Sentry/Crashlytics for crash reports; ensure proper source map upload for JS stack traces (Hermes sourcemaps configuration differs).
+
+Distribution & OTA:
+- CodePush (Microsoft) for JS updates (careful with native changes).
+- Fastlane for app store uploads and TestFlight automation.
+
+SECTION 19 — MIGRATION NOTES & VERSIONING
+------------------------------------------
+- RN is actively developed; some APIs moved to community packages (AsyncStorage, NetInfo, WebView, etc.).
+- For major RN upgrades, use `react-native-upgrade` helper or `rn-diff-purge` to see diff between versions.
+- Consider migrating to Hermes and new architecture (TurboModules/Fabric) in planned manner.
+
+SECTION 20 — FULL EXAMPLE APP (Multi-file skeleton)
+---------------------------------------------------
+Project structure (simple):
+```
+/App.js
+/src/components/
+  Header.js
+  ListItem.js
+/src/screens/
+  HomeScreen.js
+  DetailsScreen.js
+/src/navigation/
+  AppNavigator.js
+/src/services/
+  api.js
+/src/hooks/
+  useNetworkStatus.js
+```
+App.js (entry):
+```js
+import React from 'react';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import AppNavigator from './src/navigation/AppNavigator';
+export default function App(){ return (<SafeAreaProvider><AppNavigator/></SafeAreaProvider>); }
+```
+
+HomeScreen.js (uses FlatList, RefreshControl, Modal, TextInput):
+(omitted here for brevity — real code in earlier mini example and can be expanded)
+
+SECTION 21 — APP SIZE REDUCTION & BUNDLE TIPS
+--------------------------------------------
+- Enable Hermes (reduces APK size and improves performance in many cases).
+- Remove unused locales/resources/libraries.
+- Use Proguard to remove unused code and shrink native libs.
+- Use App Bundle (.aab) for Android to reduce user download sizes.
+
+SECTION 22 — DEBUGGING CRASHES & SYMBOLICATION
+----------------------------------------------
+- Upload native dSYMs (iOS) and Proguard mapping (Android) to crash tools (Sentry, Firebase Crashlytics) for deobfuscation.
+- For JS errors, ensure proper source maps are uploaded to error tracking services. Hermes requires different sourcemap upload flow.
+
+SECTION 23 — APP INTERNATIONALIZATION (i18n)
+---------------------------------------------
+- Use `i18next` or `react-intl` wrappers. For RN use `react-native-localize` to detect locale and `i18next` for translations.
+- Consider RTL support: `I18nManager.forceRTL(true);` followed by app reload.
+
+SECTION 24 — OFFLINE & SYNCHRONIZATION STRATEGIES
+-------------------------------------------------
+- Use local DB (Realm, WatermelonDB) and sync queues to batch updates.
+- Design conflict resolution strategies: last-write-wins, CRDTs, or server-driven merges.
+
+SECTION 25 — COMMON PITFALLS & CHECKLIST
+----------------------------------------
+- Missing permission handling for camera/microphone/location.
+- Not handling app lifecycle (AppState) resulting in background issues.
+- Overusing ScrollView for long lists -> OOM crashes.
+- Not testing on low-memory or low CPU devices.
+- Forgetting to configure Proguard / code signing properly for release builds.
+
+SECTION 26 — APP EXAMPLES & SNIPPETS (ADDITIONAL)
+-------------------------------------------------
+A. Debounced search input using useCallback + useRef:
+```js
+import React, {useState, useCallback} from 'react';
+import { TextInput } from 'react-native';
+import debounce from 'lodash.debounce';
+export default function Search(){ const [q,setQ]=useState(''); const deb = useCallback(debounce((val)=>console.log(val),300),[]); return <TextInput value={q} onChangeText={(t)=>{ setQ(t); deb(t); }} />; }
+```
+
+B. Image prefetch + cache:
+```js
+import { Image } from 'react-native';
+Image.prefetch('https://...');
+```
+
+C. Using NetInfo:
+```js
+import NetInfo from '@react-native-community/netinfo';
+NetInfo.fetch().then(state=> console.log(state.isConnected));
+```
+
+SECTION 27 — APP ARCHITECTURE PATTERNS
+-------------------------------------
+- MVC is common for simple apps.
+- Use MVVM / Redux / Zustand / Recoil or Context + hooks for state management in larger apps.
+- For offline-first heavy apps use Realm/WatermelonDB with local-first architecture.
+- Keep native code minimal and encapsulated in modules.
+
+SECTION 28 — RESOURCES & LINKS (recommended reading)
+-----------------------------------------------------
+- Official RN docs: reactnative.dev
+- React Native Community repos on GitHub (AsyncStorage, NetInfo, etc.)
+- Reanimated, Gesture Handler, and React Navigation docs
+- Hermes docs for engine-specific config
+- Flipper docs for native debugging
+
+SECTION 29 — APPENDIX — QUICK REFERENCE LIST (CORE COMPONENT NAMES)
+------------------------------------------------------------------
+View, Text, Image, ScrollView, FlatList, SectionList, VirtualizedList, TextInput, Pressable,
+TouchableOpacity, TouchableHighlight, TouchableWithoutFeedback, Button, Modal, ActivityIndicator,
+SafeAreaView, StatusBar, KeyboardAvoidingView, RefreshControl, ImageBackground, WebView (community),
+Keyboard, Dimensions, PixelRatio, Platform, Alert, Linking, AppState, BackHandler, InteractionManager,
+NativeModules, UIManager, Animated, LayoutAnimation, PanResponder, AccessibilityInfo, AccessibilityProps
+
+END OF NOTEBOOK — EXTENDED
+==========================
+This extended notebook is a large, practical snapshot of React Native's ecosystem and core platform for 2025. It aims to include "everything" that matters: core components, community modules, platform-specifics, native bridging, performance, testing, and release processes — while being practical for day-to-day development.
+
+If you'd like, I can now:
+- Produce a fully exhaustive prop-by-prop expanded file (e.g., list every documented prop for every core component) — this will be *very* large (many MBs). I can deliver by splitting into multiple files (`components.txt`, `apis.txt`, `platform-specific.txt`, `native-modules-guide.txt`).
+- Generate a Markdown version (`.md`) with clickable TOC and code blocks for nicer reading or a searchable PDF.
+- Create smaller focused cheatsheets (e.g., "List Performance Cheatsheet", "Animation Cheatsheet", "Accessibility Cheatsheet").
+
+Tell me which one to produce next and I'll add it immediately into the workspace and provide a download link.
